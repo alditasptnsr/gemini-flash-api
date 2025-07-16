@@ -33,9 +33,23 @@ app.post("/generate-text", async (req, res) => {
   }
 });
 
+function imageToGenerativePart(filePath, mimeType = "image/png") {
+  const data = fs.readFileSync(filePath).toString("base64");
+  return {
+    inlineData: {
+      data,
+      mimeType,
+    },
+  };
+}
+
 app.post("/generate-from-image", upload.single("image"), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "Image file is required." });
+  }
+
   const prompt = req.body.prompt || "Describe the image";
-  const image = imageToGenerativePart(req.file.path);
+  const image = imageToGenerativePart(req.file.path, req.file.mimetype);
 
   try {
     const result = await model.generateContent([prompt, image]);
